@@ -1,0 +1,32 @@
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 32px;
+    background: #1e293b;
+    color: white;
+  }
+  
+  .logo {
+    font-size: 20px;
+    font-weight: 600;
+  }
+  
+  .nav-buttons button {
+    margin-left: 10px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #334155;
+    color: white;
+    transition: 0.3s;
+  }
+  
+  .nav-buttons button:hover {
+    background: #475569;
+  }
+  
+  .nav-buttons .active {
+    background: #3b82f6;
+  }
