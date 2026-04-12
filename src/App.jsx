@@ -1,13 +1,12 @@
+import { Navigate, Route, Routes } from "react-router-dom";
 import { useMemo, useState } from "react";
 import Navbar from "./components/Navbar";
 import { useApi } from "./hooks/useApi";
 import { useDebounce } from "./hooks/useDebounce";
 import { useProjects } from "./hooks/useProjects";
 import { mockData } from "./data/mockData";
-import SearchBar from "./components/Searchbar";
-import Pagination from "./components/Pagination";
-import ProjectList from "./components/ProjectList";
-import ProjectDetails from "./components/ProjectDetails";
+import ProjectsScreen from "./components/ProjectsScreen";
+import TasksScreen from "./components/TasksScreen";
 import "./App.css";
 
 const PAGE_SIZE = 10;
@@ -28,11 +27,42 @@ const normalizeApiProject = (project) => ({
   id: `api-${project.id}`,
   name: project.title,
   manager: createFallbackManager(project.id),
-  status: project.id % 3 === 0 ? "Completed" : project.id % 2 === 0 ? "On Hold" : "In Progress",
+  status:
+    project.id % 3 === 0
+      ? "Completed"
+      : project.id % 2 === 0
+        ? "On Hold"
+        : "In Progress",
   deadline: `2026-${String((project.id % 12) + 1).padStart(2, "0")}-${String((project.id % 28) + 1).padStart(2, "0")}`,
   description: project.body,
   source: "api",
 });
+
+const taskTemplates = [
+  {
+    suffix: "Discovery",
+    statuses: ["In Progress", "In Review", "Completed"],
+    owners: ["Research", "Planning", "Analysis"],
+  },
+  {
+    suffix: "Delivery",
+    statuses: ["Planned", "In Progress", "Blocked"],
+    owners: ["Engineering", "QA", "Operations"],
+  },
+];
+
+const buildTasksFromProjects = (projects) =>
+  projects.flatMap((project, projectIndex) =>
+    taskTemplates.map((template, templateIndex) => ({
+      id: `${project.id}-task-${templateIndex + 1}`,
+      title: `${project.name} ${template.suffix}`,
+      projectName: project.name,
+      owner: template.owners[(projectIndex + templateIndex) % template.owners.length],
+      status: template.statuses[(projectIndex + templateIndex) % template.statuses.length],
+      dueDate: project.deadline,
+      source: project.source,
+    }))
+  );
 
 const initialViewState = {
   mock: { search: "", page: 1, selectedId: null },
@@ -55,6 +85,14 @@ function App() {
       api: apiProjects.map(normalizeApiProject),
     }),
     [apiProjects, mockProjects]
+  );
+
+  const tasksBySource = useMemo(
+    () => ({
+      mock: buildTasksFromProjects(normalizedProjects.mock),
+      api: buildTasksFromProjects(normalizedProjects.api),
+    }),
+    [normalizedProjects]
   );
 
   const baseData = normalizedProjects[source];
@@ -106,45 +144,44 @@ function App() {
       : "No mock projects match the current search.";
 
   return (
-    <>
+    <div className="app-shell">
       <Navbar source={source} setSource={setSource} />
 
-      <div className="container">
-        <div className="toolbar">
-          <SearchBar search={activeView.search} setSearch={handleSearchChange} />
-          <p className="view-label">
-            Viewing <strong>{source === "mock" ? "Mock Data" : "API Data"}</strong>
-          </p>
-        </div>
-
-        {isLoading && <p className="status-message">Loading {source} projects...</p>}
-        {error && source === "api" && (
-          <p className="status-message error">Unable to load API projects.</p>
-        )}
-
-        <div className="dashboard">
-          <div className="left-panel">
-            <ProjectList
-              projects={paginated}
-              onSelect={handleProjectSelect}
-              selectedId={selectedProject?.id}
+      <Routes>
+        <Route path="/" element={<Navigate to="/projects" replace />} />
+        <Route
+          path="/projects"
+          element={
+            <ProjectsScreen
+              source={source}
+              search={activeView.search}
+              setSearch={handleSearchChange}
+              isLoading={isLoading}
+              error={error}
+              paginatedProjects={paginated}
+              selectedProject={selectedProject}
+              onProjectSelect={handleProjectSelect}
               emptyMessage={emptyMessage}
+              page={activeView.page}
+              setPage={handlePageChange}
+              total={filtered.length}
+              pageSize={PAGE_SIZE}
             />
-          </div>
-
-          <div className="right-panel">
-            <ProjectDetails project={selectedProject} />
-          </div>
-        </div>
-
-        <Pagination
-          page={activeView.page}
-          setPage={handlePageChange}
-          total={filtered.length}
-          pageSize={PAGE_SIZE}
+          }
         />
-      </div>
-    </>
+        <Route
+          path="/tasks"
+          element={
+            <TasksScreen
+              source={source}
+              tasks={tasksBySource[source]}
+              isLoading={isLoading}
+              error={error}
+            />
+          }
+        />
+      </Routes>
+    </div>
   );
 }
 

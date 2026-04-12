@@ -1,3 +1,8 @@
+.app-shell {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
 .container {
   padding: 24px 40px;
   max-width: 1200px;
@@ -28,6 +33,29 @@
 
 .status-message.error {
   color: #b91c1c;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.page-header h1 {
+  margin: 0 0 8px;
+}
+
+.page-copy {
+  margin: 0;
+  max-width: 720px;
+  color: #475569;
 }
 
 .dashboard {
@@ -97,6 +125,93 @@
   color: #0f172a;
 }
 
+.task-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card,
+.task-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.summary-card span {
+  display: block;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.summary-card strong {
+  font-size: 24px;
+  color: #0f172a;
+}
+
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.task-source {
+  margin: 0 0 8px;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.task-card h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.task-project {
+  margin: 0 0 12px;
+  color: #475569;
+}
+
+.task-status {
+  margin-bottom: 12px;
+}
+
+.task-status.in-review,
+.task-status.in-progress {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.task-status.blocked,
+.task-status.on-hold {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.task-status.planned {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.task-meta {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.task-meta dt {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.task-meta dd {
+  margin: 4px 0 0;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 20px;
@@ -105,6 +220,10 @@
   .toolbar,
   .dashboard {
     flex-direction: column;
+  }
+
+  .task-summary {
+    grid-template-columns: 1fr;
   }
 
   .view-label {
