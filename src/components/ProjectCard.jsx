@@ -26,6 +26,7 @@ const ProjectCard = ({ project, onSelect, isSelected }) => {
       <p className={`status ${statusClassName(project.status)}`}>{project.status}</p>
       <p className="meta">Manager: {project.manager}</p>
       <p className="meta">Deadline: {project.deadline}</p>
+      <p className="meta">Tasks: {project.taskCount ?? 0}</p>
     </button>
   );
 };

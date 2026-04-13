@@ -4,7 +4,6 @@ import ProjectList from "./ProjectList";
 import SearchBar from "./Searchbar";
 
 const ProjectsScreen = ({
-  source,
   search,
   setSearch,
   isLoading,
@@ -17,20 +16,26 @@ const ProjectsScreen = ({
   setPage,
   total,
   pageSize,
+  onCreateProject,
+  onEditProject,
+  onAddTask,
 }) => {
   return (
     <div className="container">
       <div className="toolbar">
         <SearchBar search={search} setSearch={setSearch} />
-        <p className="view-label">
-          Viewing <strong>{source === "mock" ? "Mock Data" : "API Data"}</strong>
-        </p>
+        <div className="toolbar-actions">
+          <p className="view-label">
+            Viewing <strong>Live API projects</strong>
+          </p>
+          <button type="button" className="primary-button" onClick={onCreateProject}>
+            Add Project
+          </button>
+        </div>
       </div>
 
-      {isLoading && <p className="status-message">Loading {source} projects...</p>}
-      {error && source === "api" && (
-        <p className="status-message error">Unable to load API projects.</p>
-      )}
+      {isLoading && <p className="status-message">Loading projects...</p>}
+      {error && <p className="status-message error">Unable to load projects.</p>}
 
       <div className="dashboard">
         <div className="left-panel">
@@ -43,7 +48,11 @@ const ProjectsScreen = ({
         </div>
 
         <div className="right-panel">
-          <ProjectDetails project={selectedProject} />
+          <ProjectDetails
+            project={selectedProject}
+            onEditProject={onEditProject}
+            onAddTask={onAddTask}
+          />
         </div>
       </div>
 

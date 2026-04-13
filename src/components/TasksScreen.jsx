@@ -1,4 +1,4 @@
-const TasksScreen = ({ source, tasks, isLoading, error }) => {
+const TasksScreen = ({ tasks, isLoading, error, onCreateTask, onEditTask, onStatusChange }) => {
   const completedTasks = tasks.filter((task) => task.status === "Completed").length;
 
   return (
@@ -6,18 +6,19 @@ const TasksScreen = ({ source, tasks, isLoading, error }) => {
       <div className="page-header">
         <div>
           <p className="eyebrow">Task Board</p>
-          <h1>Tasks for {source === "mock" ? "Mock Data" : "API Data"}</h1>
+          <h1>Tasks from the Live API</h1>
           <p className="page-copy">
-            This screen uses client-side routing, so switching between Projects and Tasks stays
-            inside the app without a full-page reload.
+            Use the modal to create or edit tasks, and use the inline status control to track task
+            progress without leaving the screen.
           </p>
         </div>
+        <button type="button" className="primary-button" onClick={onCreateTask}>
+          Add Task
+        </button>
       </div>
 
-      {isLoading && <p className="status-message">Loading {source} tasks...</p>}
-      {error && source === "api" && (
-        <p className="status-message error">Unable to load API tasks.</p>
-      )}
+      {isLoading && <p className="status-message">Loading tasks...</p>}
+      {error && <p className="status-message error">Unable to load tasks.</p>}
 
       <div className="task-summary">
         <div className="summary-card">
@@ -36,18 +37,34 @@ const TasksScreen = ({ source, tasks, isLoading, error }) => {
 
       <div className="task-grid">
         {tasks.length === 0 ? (
-          <p className="list-empty">No tasks are available for this source.</p>
+          <p className="list-empty">No tasks are available yet.</p>
         ) : (
           tasks.map((task) => (
             <article key={task.id} className="task-card">
-              <p className="task-source">
-                {task.source === "mock" ? "Mock dataset" : "API dataset"}
-              </p>
+              <p className="task-source">Task #{task.id}</p>
               <h2>{task.title}</h2>
               <p className="task-project">Project: {task.projectName}</p>
-              <p className={`status task-status ${task.status.toLowerCase().replace(/\s+/g, "-")}`}>
-                {task.status}
-              </p>
+              <div className="task-card-actions">
+                <p className={`status task-status ${task.status.toLowerCase().replace(/\s+/g, "-")}`}>
+                  {task.status}
+                </p>
+                <button type="button" className="ghost-button" onClick={() => onEditTask(task)}>
+                  Edit
+                </button>
+              </div>
+              <label className="status-select">
+                Status
+                <select
+                  value={task.status}
+                  onChange={(event) => onStatusChange(task.id, event.target.value)}
+                >
+                  <option>Planned</option>
+                  <option>In Progress</option>
+                  <option>In Review</option>
+                  <option>Completed</option>
+                  <option>Blocked</option>
+                </select>
+              </label>
               <dl className="task-meta">
                 <div>
                   <dt>Owner</dt>
@@ -56,6 +73,10 @@ const TasksScreen = ({ source, tasks, isLoading, error }) => {
                 <div>
                   <dt>Due date</dt>
                   <dd>{task.dueDate}</dd>
+                </div>
+                <div>
+                  <dt>Description</dt>
+                  <dd>{task.description}</dd>
                 </div>
               </dl>
             </article>

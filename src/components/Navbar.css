@@ -1,11 +1,13 @@
 .navbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 16px 32px;
-  background: #1e293b;
+  background: rgba(0, 0, 0, 0.24);
   color: white;
   gap: 16px;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.18);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
 }
 
 .nav-brand {
@@ -26,37 +28,17 @@
 }
 
 .nav-link {
-  color: #cbd5e1;
+  color: #dbeafe;
   text-decoration: none;
   font-weight: 500;
+  padding: 8px 10px;
+  border-radius: 999px;
 }
 
 .nav-link:hover,
 .nav-link.active-link {
   color: white;
-}
-
-.nav-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.nav-buttons button {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  background: #334155;
-  color: white;
-  transition: 0.3s;
-}
-
-.nav-buttons button:hover {
-  background: #475569;
-}
-
-.nav-buttons .active {
-  background: #3b82f6;
+  background: rgba(255, 255, 255, 0.14);
 }
 
 @media (max-width: 768px) {

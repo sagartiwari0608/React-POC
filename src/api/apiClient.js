@@ -1,31 +1,40 @@
 import axios from "axios";
 
-const BASE_URL = "https://jsonplaceholder.typicode.com/posts";
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api",
+});
 
-// FETCH
 export const fetchProjects = async () => {
-  const res = await fetch(BASE_URL);
-  if (!res.ok) throw new Error("Fetch failed");
-  return res.json();
+  const response = await apiClient.get("/projects");
+  return response.data;
 };
 
-// AXIOS
-export const fetchProjectsAxios = async () => {
-  const res = await axios.get(BASE_URL);
-  return res.data;
-};
-
-// POST
 export const createProject = async (data) => {
-  return axios.post(BASE_URL, data);
+  const response = await apiClient.post("/projects", data);
+  return response.data;
 };
 
-// PUT
 export const updateProject = async (id, data) => {
-  return axios.put(`${BASE_URL}/${id}`, data);
+  const response = await apiClient.put(`/projects/${id}`, data);
+  return response.data;
 };
 
-// PATCH
-export const patchProject = async (id, data) => {
-  return axios.patch(`${BASE_URL}/${id}`, data);
+export const fetchTasks = async () => {
+  const response = await apiClient.get("/tasks");
+  return response.data;
+};
+
+export const createTask = async (data) => {
+  const response = await apiClient.post("/tasks", data);
+  return response.data;
+};
+
+export const updateTask = async (id, data) => {
+  const response = await apiClient.put(`/tasks/${id}`, data);
+  return response.data;
+};
+
+export const patchTaskStatus = async (id, status) => {
+  const response = await apiClient.patch(`/tasks/${id}/status`, { status });
+  return response.data;
 };

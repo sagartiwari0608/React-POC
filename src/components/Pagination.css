@@ -9,13 +9,14 @@
 .pagination button {
   padding: 6px 12px;
   border-radius: 6px;
-  border: none;
-  background: #e2e8f0;
+  border: 1px solid #2f4360;
+  background: #0f1a2a;
+  color: #dce8f8;
   cursor: pointer;
 }
 
 .pagination button:hover:not(:disabled) {
-  background: #cbd5f5;
+  background: #18283e;
 }
 
 .pagination button:disabled {

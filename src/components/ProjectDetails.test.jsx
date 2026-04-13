@@ -14,19 +14,19 @@ describe("ProjectDetails", () => {
     render(
       <ProjectDetails
         project={{
-          id: "mock-1",
-          name: "Mock Alpha",
+          id: 1,
+          name: "Apollo Migration",
           manager: "Alice",
           status: "In Progress",
           deadline: "2026-06-15",
-          description: "Mock alpha description",
-          source: "mock",
+          description: "Move the reporting stack to the new platform.",
+          taskCount: 3,
         }}
       />
     );
 
-    expect(screen.getByRole("heading", { name: "Mock Alpha" })).toBeInTheDocument();
-    expect(screen.getByText("Mock dataset")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Apollo Migration" })).toBeInTheDocument();
+    expect(screen.getByText("Live API project")).toBeInTheDocument();
     expect(screen.getByText("Alice")).toBeInTheDocument();
   });
 });

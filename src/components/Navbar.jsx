@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import "./Navbar.css";
 
-const Navbar = ({ source, setSource }) => {
+const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="nav-brand">
@@ -21,22 +21,6 @@ const Navbar = ({ source, setSource }) => {
             Tasks
           </NavLink>
         </div>
-      </div>
-
-      <div className="nav-buttons">
-        <button
-          className={source === "mock" ? "active" : ""}
-          onClick={() => setSource("mock")}
-        >
-          Mock Data
-        </button>
-
-        <button
-          className={source === "api" ? "active" : ""}
-          onClick={() => setSource("api")}
-        >
-          API Data
-        </button>
       </div>
     </nav>
   );

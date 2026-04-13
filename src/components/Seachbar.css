@@ -1,7 +1,19 @@
 .search-input {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    margin-bottom: 16px;
-  }
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #304560;
+  margin-bottom: 16px;
+  background: rgba(11, 19, 32, 0.88);
+  color: #eef5ff;
+}
+
+.search-input::placeholder {
+  color: #7f94b0;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.16);
+}

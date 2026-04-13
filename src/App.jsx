@@ -1,151 +1,180 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useMemo, useState } from "react";
 import Navbar from "./components/Navbar";
-import { useApi } from "./hooks/useApi";
+import EntityModal from "./components/EntityModal";
 import { useDebounce } from "./hooks/useDebounce";
-import { useProjects } from "./hooks/useProjects";
-import { mockData } from "./data/mockData";
 import ProjectsScreen from "./components/ProjectsScreen";
 import TasksScreen from "./components/TasksScreen";
+import { useProjectsApi } from "./hooks/useProjectsApi";
+import { useTasksApi } from "./hooks/useTasksApi";
 import "./App.css";
 
 const PAGE_SIZE = 10;
 
-const createFallbackManager = (id) => `API Owner ${((id - 1) % 5) + 1}`;
-
-const normalizeMockProject = (project) => ({
-  id: `mock-${project.id}`,
-  name: project.name,
-  manager: project.manager,
-  status: project.status,
-  deadline: project.deadline,
-  description: project.description,
-  source: "mock",
-});
-
-const normalizeApiProject = (project) => ({
-  id: `api-${project.id}`,
-  name: project.title,
-  manager: createFallbackManager(project.id),
-  status:
-    project.id % 3 === 0
-      ? "Completed"
-      : project.id % 2 === 0
-        ? "On Hold"
-        : "In Progress",
-  deadline: `2026-${String((project.id % 12) + 1).padStart(2, "0")}-${String((project.id % 28) + 1).padStart(2, "0")}`,
-  description: project.body,
-  source: "api",
-});
-
-const taskTemplates = [
-  {
-    suffix: "Discovery",
-    statuses: ["In Progress", "In Review", "Completed"],
-    owners: ["Research", "Planning", "Analysis"],
-  },
-  {
-    suffix: "Delivery",
-    statuses: ["Planned", "In Progress", "Blocked"],
-    owners: ["Engineering", "QA", "Operations"],
-  },
-];
-
-const buildTasksFromProjects = (projects) =>
-  projects.flatMap((project, projectIndex) =>
-    taskTemplates.map((template, templateIndex) => ({
-      id: `${project.id}-task-${templateIndex + 1}`,
-      title: `${project.name} ${template.suffix}`,
-      projectName: project.name,
-      owner: template.owners[(projectIndex + templateIndex) % template.owners.length],
-      status: template.statuses[(projectIndex + templateIndex) % template.statuses.length],
-      dueDate: project.deadline,
-      source: project.source,
-    }))
-  );
-
-const initialViewState = {
-  mock: { search: "", page: 1, selectedId: null },
-  api: { search: "", page: 1, selectedId: null },
+const initialModalState = {
+  open: false,
+  entityType: "project",
+  mode: "create",
+  initialValues: null,
 };
 
 function App() {
-  const { projects: mockProjects } = useProjects();
-  const { data: apiProjects, loading: apiLoading, error } = useApi();
+  const {
+    projects,
+    loading: projectsLoading,
+    saving: projectsSaving,
+    error: projectsError,
+    createProject,
+    updateProject,
+  } = useProjectsApi();
+  const {
+    tasks,
+    loading: tasksLoading,
+    saving: tasksSaving,
+    error: tasksError,
+    createTask,
+    updateTask,
+    patchTaskStatus,
+  } = useTasksApi();
 
-  const [source, setSource] = useState("mock");
-  const [viewState, setViewState] = useState(initialViewState);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [modalState, setModalState] = useState(initialModalState);
 
-  const activeView = viewState[source];
-  const debouncedSearch = useDebounce(activeView.search);
+  const debouncedSearch = useDebounce(search);
 
-  const normalizedProjects = useMemo(
-    () => ({
-      mock: (mockProjects.length > 0 ? mockProjects : mockData.projects).map(normalizeMockProject),
-      api: apiProjects.map(normalizeApiProject),
-    }),
-    [apiProjects, mockProjects]
+  const projectTaskCounts = useMemo(
+    () =>
+      tasks.reduce((counts, task) => {
+        counts[task.projectId] = (counts[task.projectId] ?? 0) + 1;
+        return counts;
+      }, {}),
+    [tasks]
   );
 
-  const tasksBySource = useMemo(
-    () => ({
-      mock: buildTasksFromProjects(normalizedProjects.mock),
-      api: buildTasksFromProjects(normalizedProjects.api),
-    }),
-    [normalizedProjects]
+  const projectsWithMetrics = useMemo(
+    () =>
+      projects.map((project) => ({
+        ...project,
+        taskCount: projectTaskCounts[project.id] ?? 0,
+      })),
+    [projectTaskCounts, projects]
   );
-
-  const baseData = normalizedProjects[source];
 
   const filtered = useMemo(() => {
-    return baseData.filter((item) =>
+    return projectsWithMetrics.filter((item) =>
       [item.name, item.manager, item.status, item.description]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(debouncedSearch.toLowerCase()))
     );
-  }, [baseData, debouncedSearch]);
+  }, [debouncedSearch, projectsWithMetrics]);
 
   const paginated = useMemo(() => {
-    const start = (activeView.page - 1) * PAGE_SIZE;
+    const start = (page - 1) * PAGE_SIZE;
     return filtered.slice(start, start + PAGE_SIZE);
-  }, [activeView.page, filtered]);
+  }, [filtered, page]);
 
   const selectedProject = useMemo(() => {
-    const matchingProject = baseData.find((project) => project.id === activeView.selectedId);
+    const matchingProject = projectsWithMetrics.find((project) => project.id === selectedProjectId);
     return matchingProject ?? paginated[0] ?? null;
-  }, [activeView.selectedId, baseData, paginated]);
+  }, [paginated, projectsWithMetrics, selectedProjectId]);
 
-  const updateActiveView = (updates) => {
-    setViewState((currentState) => ({
-      ...currentState,
-      [source]: {
-        ...currentState[source],
-        ...updates,
-      },
-    }));
-  };
+  const tasksWithProjectName = useMemo(
+    () =>
+      tasks.map((task) => ({
+        ...task,
+        projectName:
+          projects.find((project) => project.id === task.projectId)?.name ?? "Unknown Project",
+      })),
+    [projects, tasks]
+  );
 
   const handleSearchChange = (value) => {
-    updateActiveView({ search: value, page: 1, selectedId: null });
+    setSearch(value);
+    setPage(1);
+    setSelectedProjectId(null);
   };
 
   const handlePageChange = (nextPage) => {
-    updateActiveView({ page: nextPage, selectedId: null });
+    setPage(nextPage);
+    setSelectedProjectId(null);
   };
 
   const handleProjectSelect = (project) => {
-    updateActiveView({ selectedId: project.id });
+    setSelectedProjectId(project.id);
   };
 
-  const isLoading = source === "api" ? apiLoading : false;
-  const emptyMessage =
-    source === "api"
-      ? "No API projects match the current search."
-      : "No mock projects match the current search.";
+  const openModal = (entityType, mode, initialValues = null) => {
+    setModalState({
+      open: true,
+      entityType,
+      mode,
+      initialValues,
+    });
+  };
+
+  const closeModal = () => {
+    setModalState(initialModalState);
+  };
+
+  const handleProjectSubmit = async (values) => {
+    if (modalState.mode === "create") {
+      const createdProject = await createProject(values);
+      setSelectedProjectId(createdProject.id);
+    } else {
+      await updateProject(modalState.initialValues.id, values);
+    }
+
+    closeModal();
+  };
+
+  const handleTaskSubmit = async (values) => {
+    const payload = {
+      ...values,
+      projectId: Number(values.projectId),
+    };
+
+    if (modalState.mode === "create") {
+      await createTask(payload);
+    } else {
+      await updateTask(modalState.initialValues.id, payload);
+    }
+
+    closeModal();
+  };
+
+  const handleModalSubmit = async (values) => {
+    if (modalState.entityType === "project") {
+      await handleProjectSubmit(values);
+      return;
+    }
+
+    await handleTaskSubmit(values);
+  };
+
+  const handleTaskStatusChange = async (taskId, status) => {
+    await patchTaskStatus(taskId, status);
+  };
+
+  const openCreateProjectModal = () => openModal("project", "create");
+  const openEditProjectModal = (project) => openModal("project", "update", project);
+  const openCreateTaskModal = (project = null) =>
+    openModal("task", "create", project ? { projectId: String(project.id) } : null);
+  const openEditTaskModal = (task) =>
+    openModal("task", "update", {
+      ...task,
+      projectId: String(task.projectId),
+    });
+
+  const isLoading = projectsLoading || tasksLoading;
+  const isSaving = projectsSaving || tasksSaving;
+  const error = projectsError ?? tasksError;
+  const emptyMessage = "No API projects match the current search.";
 
   return (
     <div className="app-shell">
-      <Navbar source={source} setSource={setSource} />
+      <Navbar />
 
       <Routes>
         <Route path="/" element={<Navigate to="/projects" replace />} />
@@ -153,8 +182,7 @@ function App() {
           path="/projects"
           element={
             <ProjectsScreen
-              source={source}
-              search={activeView.search}
+              search={search}
               setSearch={handleSearchChange}
               isLoading={isLoading}
               error={error}
@@ -162,10 +190,13 @@ function App() {
               selectedProject={selectedProject}
               onProjectSelect={handleProjectSelect}
               emptyMessage={emptyMessage}
-              page={activeView.page}
+              page={page}
               setPage={handlePageChange}
               total={filtered.length}
               pageSize={PAGE_SIZE}
+              onCreateProject={openCreateProjectModal}
+              onEditProject={openEditProjectModal}
+              onAddTask={openCreateTaskModal}
             />
           }
         />
@@ -173,14 +204,27 @@ function App() {
           path="/tasks"
           element={
             <TasksScreen
-              source={source}
-              tasks={tasksBySource[source]}
+              tasks={tasksWithProjectName}
               isLoading={isLoading}
               error={error}
+              onCreateTask={() => openCreateTaskModal(selectedProject)}
+              onEditTask={openEditTaskModal}
+              onStatusChange={handleTaskStatusChange}
             />
           }
         />
       </Routes>
+
+      <EntityModal
+        open={modalState.open}
+        entityType={modalState.entityType}
+        mode={modalState.mode}
+        initialValues={modalState.initialValues}
+        projects={projects}
+        isSaving={isSaving}
+        onClose={closeModal}
+        onSubmit={handleModalSubmit}
+      />
     </div>
   );
 }
